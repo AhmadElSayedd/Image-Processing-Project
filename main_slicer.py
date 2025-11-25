@@ -3,60 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-# ==========================================
-# 1. HELPER: GRID SIZE DETECTOR (Sobel)
-# ==========================================
-# def detect_grid_size(image_path):
-#     """
-#     Automatically detects if the puzzle is 2x2, 4x4, or 8x8.
-#     Uses Sobel gradients to find cut lines, robust to faint edges.
-#     """
-#     img = cv2.imread(image_path)
-#     if img is None:
-#         print(f"Warning: Could not read {image_path} for detection.")
-#         return 2 # Default fallback
-
-#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-#     # Use Sobel for continuous edge strength (better than Canny for faint lines)
-#     sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
-#     sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-    
-#     abs_grad_x = cv2.convertScaleAbs(sobel_x)
-#     abs_grad_y = cv2.convertScaleAbs(sobel_y)
-
-#     # Sum projections
-#     v_proj = np.sum(abs_grad_x, axis=0)
-#     h_proj = np.sum(abs_grad_y, axis=1)
-
-#     # Normalize by median noise floor
-#     v_norm = v_proj / (np.median(v_proj) + 1e-5)
-#     h_norm = h_proj / (np.median(h_proj) + 1e-5)
-
-#     def check_presence(projection, N, threshold=1.4):
-#         """Checks if peaks exist at 1/N, 3/N... locations"""
-#         length = len(projection)
-#         # Check odd intervals (1/8, 3/8...) to avoid overlap with coarser grids
-#         if N == 8: ratios = [1/8, 3/8, 5/8, 7/8]
-#         elif N == 4: ratios = [1/4, 3/4]
-#         else: return 0.0
-
-#         found = 0
-#         window = int(length * 0.02)
-#         for r in ratios:
-#             center = int(length * r)
-#             start, end = max(0, center - window), min(length, center + window)
-#             if np.max(projection[start:end]) > threshold:
-#                 found += 1
-#         return found / len(ratios)
-
-#     # Decision Logic
-#     if check_presence(v_norm, 8) >= 0.5 and check_presence(h_norm, 8) >= 0.5:
-#         return 8
-#     elif check_presence(v_norm, 4) >= 0.5 and check_presence(h_norm, 4) >= 0.5:
-#         return 4
-#     else:
-#         return 2
 from detector import detect_grid_size_robust
 # ==========================================
 # 2. MAIN CLASS: PUZZLE PREPROCESSOR
