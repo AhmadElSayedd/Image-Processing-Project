@@ -33,11 +33,13 @@ def load_phase1_tiles(image_path: str,
                       phase1_root: str = "artifacts"):
     """
     Given the original scrambled puzzle image path and the Phase-1 artifacts root,
-    load the tiles produced by Phase-1.
+    load the tiles produced by Phase-1 along with pre-computed sobel edges and corners.
 
     Returns:
       tiles: list of dicts: {
         'img': BGR tile image,
+        'edges': sobel edges (grayscale),
+        'corners_img': corners visualization (BGR),
         'row': r, 'col': c, 'id': r*N + c
       }
       N: grid size
@@ -57,13 +59,30 @@ def load_phase1_tiles(image_path: str,
     for r in range(N):
         for c in range(N):
             tile_idx = r * N + c
-            fname = f"tile_{r}_{c}_rgb.jpg"
-            tpath = os.path.join(tiles_dir, str(tile_idx), "rgb", fname)
-            tile_bgr = cv2.imread(tpath)
+            tile_folder = os.path.join(tiles_dir, str(tile_idx))
+            
+            # Load pre-computed RGB tile
+            rgb_path = os.path.join(tile_folder, "rgb", f"tile_{r}_{c}_rgb.jpg")
+            tile_bgr = cv2.imread(rgb_path)
             if tile_bgr is None:
-                raise FileNotFoundError(f"Missing tile: {tpath}")
+                raise FileNotFoundError(f"Missing tile: {rgb_path}")
+            
+            # Load pre-computed Sobel edges
+            edges_path = os.path.join(tile_folder, "edges_sobel", f"tile_{r}_{c}_edges_sobel.jpg")
+            tile_edges = cv2.imread(edges_path, cv2.IMREAD_GRAYSCALE)
+            if tile_edges is None:
+                raise FileNotFoundError(f"Missing edges: {edges_path}")
+            
+            # Load pre-computed corners
+            corners_path = os.path.join(tile_folder, "corners", f"tile_{r}_{c}_corners.jpg")
+            tile_corners = cv2.imread(corners_path)
+            if tile_corners is None:
+                raise FileNotFoundError(f"Missing corners: {corners_path}")
+            
             tiles.append({
                 "img": tile_bgr,
+                "edges": tile_edges,
+                "corners_img": tile_corners,
                 "row": r,
                 "col": c,
                 "id": tile_idx  # unique ID
@@ -141,19 +160,25 @@ def border_sobel_descriptor(gray_tile, band=3):
 def prepare_tile_features(tiles, tile_h, tile_w):
     """
     For each tile:
-      - compute grayscale
-      - extract Harris corners
+      - use pre-computed Sobel edges to create border descriptors
+      - extract corners from pre-computed corner images
       - keep only corners near each side
-      - compute Sobel border descriptors
     """
     for t in tiles:
-        gray = cv2.cvtColor(t["img"], cv2.COLOR_BGR2GRAY)
-        corners = extract_harris_corners(gray)
+        # Use pre-computed sobel edges for border descriptor
+        t["sobel"] = border_sobel_descriptor(t["edges"])
+        
+        # Extract corner positions from pre-computed corner visualization
+        # Corners are marked in red [255, 0, 0] in the corner image
+        corners_gray = cv2.cvtColor(t["corners_img"], cv2.COLOR_BGR2GRAY)
+        # Find pixels that were marked as corners (non-zero in the visualization)
+        corner_mask = corners_gray > 200  # High threshold for red channel
+        corners = np.argwhere(corner_mask)  # Returns (y, x) positions
+        
         t["corners"] = {
             s: side_corners(corners, s, tile_h, tile_w)
             for s in ['T', 'B', 'L', 'R']
         }
-        t["sobel"] = border_sobel_descriptor(gray)
 
 
 # ================================
