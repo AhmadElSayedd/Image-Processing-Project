@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from phase2 import solve_full_dataset_from_phase1
+from phase2_enhanced import solve_full_dataset_from_phase1
 
 
 def summarize_results(results):

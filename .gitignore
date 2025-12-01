@@ -13,6 +13,9 @@ __pycache__/
 Milestone1_Results/
 artifacts/
 phase2_solved/
+phase2_enhanced/
+artifacts_enhanced/
+analysis_results/
 # IDE
 .vscode/
 .idea/
