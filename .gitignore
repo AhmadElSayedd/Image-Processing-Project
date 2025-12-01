@@ -11,6 +11,7 @@ __pycache__/
 
 # Generated tiles
 Milestone1_Results/
+artifacts/
 
 # IDE
 .vscode/

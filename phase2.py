@@ -53,11 +53,12 @@ def load_phase1_tiles(image_path: str,
         raise FileNotFoundError(f"Tiles directory not found: {tiles_dir}")
 
     tiles = []
-    # load tiles in row-major order: tile_0_0_rgb, tile_0_1_rgb, ...
+    # load tiles in row-major order from organized structure: tiles/0/rgb/, tiles/1/rgb/, ...
     for r in range(N):
         for c in range(N):
+            tile_idx = r * N + c
             fname = f"tile_{r}_{c}_rgb.jpg"
-            tpath = os.path.join(tiles_dir, fname)
+            tpath = os.path.join(tiles_dir, str(tile_idx), "rgb", fname)
             tile_bgr = cv2.imread(tpath)
             if tile_bgr is None:
                 raise FileNotFoundError(f"Missing tile: {tpath}")
@@ -65,7 +66,7 @@ def load_phase1_tiles(image_path: str,
                 "img": tile_bgr,
                 "row": r,
                 "col": c,
-                "id": r * N + c  # unique ID
+                "id": tile_idx  # unique ID
             })
 
     # assume all tiles same size

@@ -128,11 +128,21 @@ def process_single_puzzle(image_path, grid_size, out_root="artifacts"):
         tile_corner_vis = tile_rgb.copy()
         tile_corner_vis[corners > 0.01 * corners.max()] = [255, 0, 0]
 
-        prefix = f"tile_{r}_{c}"
+        # Create organized subdirectories for each tile
+        tile_idx = r * grid_size + c
+        tile_folder = os.path.join(tiles_dir, str(tile_idx))
+        rgb_folder = os.path.join(tile_folder, "rgb")
+        corners_folder = os.path.join(tile_folder, "corners")
+        edges_folder = os.path.join(tile_folder, "edges_sobel")
+        
+        ensure_dir(rgb_folder)
+        ensure_dir(corners_folder)
+        ensure_dir(edges_folder)
 
-        cv2.imwrite(os.path.join(tiles_dir, f"{prefix}_rgb.jpg"), cv2.cvtColor(tile_rgb, cv2.COLOR_RGB2BGR))
-        cv2.imwrite(os.path.join(tiles_dir, f"{prefix}_edges_sobel.jpg"), tile_edges)
-        cv2.imwrite(os.path.join(tiles_dir, f"{prefix}_corners.jpg"),
+        # Save files in organized structure
+        cv2.imwrite(os.path.join(rgb_folder, f"tile_{r}_{c}_rgb.jpg"), cv2.cvtColor(tile_rgb, cv2.COLOR_RGB2BGR))
+        cv2.imwrite(os.path.join(edges_folder, f"tile_{r}_{c}_edges_sobel.jpg"), tile_edges)
+        cv2.imwrite(os.path.join(corners_folder, f"tile_{r}_{c}_corners.jpg"),
                     cv2.cvtColor(tile_corner_vis, cv2.COLOR_RGB2BGR))
 
     print(f"[OK] {image_path} → grid {grid_size}x{grid_size}, saved in '{base_dir}'")
