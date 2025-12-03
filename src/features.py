@@ -1,101 +1,62 @@
-# src/features.py
 import os
 import cv2
 import numpy as np
 from glob import glob
-from typing import Dict
+from tqdm import tqdm
+from config import (
+    TILES_ENH_2_DIR, TILES_ENH_4_DIR, TILES_ENH_8_DIR,
+    VISUALS_TILES_EDGES_DIR, ensure_dirs
+)
 
-from config import TILES_2_DIR, TILES_4_DIR, TILES_8_DIR, VISUALS_DIR, ensure_dirs
-
-
-def extract_edge_strips(tile: np.ndarray,
-                        strip_width: int = 3) -> Dict[str, np.ndarray]:
-    """
-    Given a tile (H x W x 3), extract 4 border strips:
-    - 'top', 'right', 'bottom', 'left'
-    Each strip is a small region near the border.
-    """
-    h, w = tile.shape[:2]
-    w_strip = strip_width
-
-    # Make sure strip width is not too big
-    w_strip = min(w_strip, h // 2, w // 2)
-
-    top = tile[0:w_strip, :, :]           # strip along first rows
-    bottom = tile[h-w_strip:h, :, :]      # strip along last rows
-    left = tile[:, 0:w_strip, :]          # strip along first columns
-    right = tile[:, w-w_strip:w, :]       # strip along last columns
-
+def extract_edges(tile, sw=4):
+    h,w = tile.shape[:2]
+    sw = min(sw, h//4, w//4)
     return {
-        "top": top,
-        "right": right,
-        "bottom": bottom,
-        "left": left,
+        "top": tile[0:sw,:,:],
+        "bottom": tile[h-sw:h,:,:],
+        "left": tile[:,0:sw,:],
+        "right": tile[:,w-sw:w,:]
     }
 
-
-def visualize_tile_edges(tile_path: str,
-                         strip_width: int = 3,
-                         out_path: str = None):
-    """
-    Create a simple visualization showing the tile and the 4 extracted strips.
-    Good for the Milestone 1 report.
-    """
+def visualize(tile_path, out_path, sw=4):
     import matplotlib.pyplot as plt
-
     tile = cv2.imread(tile_path)
+    if tile is None: return
+    edges = extract_edges(tile, sw)
     tile_rgb = cv2.cvtColor(tile, cv2.COLOR_BGR2RGB)
-    edges = extract_edge_strips(tile, strip_width=strip_width)
 
-    plt.figure(figsize=(8, 4))
-    plt.subplot(2, 3, 2)
-    plt.title("Tile")
-    plt.imshow(tile_rgb)
-    plt.axis("off")
+    names=["top","right","bottom","left"]
+    pos=[4,3,5,1]
 
-    # Show strips
-    edge_names = ["top", "right", "bottom", "left"]
-    positions = [4, 3, 5, 1]  # somewhat around the central tile
+    plt.figure(figsize=(8,4))
+    plt.subplot(2,3,2); plt.imshow(tile_rgb); plt.axis("off")
+    plt.title(os.path.basename(tile_path))
 
-    for name, pos in zip(edge_names, positions):
-        strip = edges[name]
-        strip_rgb = cv2.cvtColor(strip, cv2.COLOR_BGR2RGB)
-        plt.subplot(2, 3, pos)
-        plt.title(name)
-        plt.imshow(strip_rgb)
-        plt.axis("off")
+    for n,p in zip(names,pos):
+        strip = cv2.cvtColor(edges[n], cv2.COLOR_BGR2RGB)
+        plt.subplot(2,3,p); plt.imshow(strip); plt.axis("off"); plt.title(n)
 
     plt.tight_layout()
-    if out_path is not None:
-        plt.savefig(out_path, dpi=150)
-        plt.close()
-    else:
-        plt.show()
+    plt.savefig(out_path, dpi=160)
+    plt.close()
 
-def run_feature_extraction():
+def run_edge_visuals():
     ensure_dirs()
-    # Only extracting features for 2x2, 4x4, 8x8 tiles
-    # You can add logic for debug visual too if needed
-    example_tiles = (
-        glob(os.path.join(TILES_4_DIR, "*.png")) +
-        glob(os.path.join(TILES_4_DIR, "*.jpg"))
-    )
-    if example_tiles:
-        example = example_tiles[0]
-        out = os.path.join(VISUALS_DIR, "tile_edges_example.png")
-        visualize_tile_edges(example, strip_width=3, out_path=out)
+    folders=[
+        (TILES_ENH_2_DIR,"2x2"),
+        (TILES_ENH_4_DIR,"4x4"),
+        (TILES_ENH_8_DIR,"8x8"),
+    ]
+    for f,label in folders:
+        tiles = sorted(glob(os.path.join(f,"*.png")))
+        if not tiles: continue
+        save_dir = os.path.join(VISUALS_TILES_EDGES_DIR, label)
+        os.makedirs(save_dir, exist_ok=True)
+        print(f"\n[Edges] {label}")
+        for t in tqdm(tiles[:6]):
+            out = os.path.join(save_dir,
+                                os.path.basename(t).replace(".png","_edges.png"))
+            visualize(t, out)
 
-if __name__ == "__main__":
-    ensure_dirs()
-
-    # Pick an example tile to visualize
-    # You can change this to any existing tile path.
-    example_tiles = (
-        glob(os.path.join(TILES_4_DIR, "*.png")) +
-        glob(os.path.join(TILES_4_DIR, "*.jpg"))
-    )
-    if example_tiles:
-        example = example_tiles[0]
-        out = os.path.join(VISUALS_DIR, "tile_edges_example.png")
-        visualize_tile_edges(example, strip_width=3, out_path=out)
-
+if __name__=="__main__":
+    run_edge_visuals()

@@ -10,13 +10,10 @@ from config import (
     VISUALS_DIR, ensure_dirs
 )
 
-
+# Segment a single image into N x N tiles and save them
 def segment_image_into_tiles(img_path: str,
                              output_dir: str,
                              N: int):
-    """
-    Given a preprocessed puzzle image, cut it into N x N tiles and save them.
-    """
     img = cv2.imread(img_path)
     if img is None:
         raise FileNotFoundError(f"Could not read image: {img_path}")
@@ -40,13 +37,10 @@ def segment_image_into_tiles(img_path: str,
             out_path = os.path.join(output_dir, tile_name)
             cv2.imwrite(out_path, tile)
 
-
+# Segment all images in a folder
 def segment_folder(preproc_dir: str,
                    tiles_dir: str,
                    N: int):
-    """
-    Segment all puzzles in preproc_dir into tiles and save in tiles_dir.
-    """
     os.makedirs(tiles_dir, exist_ok=True)
     image_paths = sorted(
         glob(os.path.join(preproc_dir, "*.jpg")) +

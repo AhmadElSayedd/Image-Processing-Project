@@ -3,7 +3,8 @@ import os
 from config import *
 from preprocess import run_preprocessing
 from segment_tiles import run_segmentation
-from features import run_feature_extraction
+from features import run_edge_visuals
+
 
 
 def run_ms1():
@@ -18,7 +19,7 @@ def run_ms1():
     run_segmentation()
 
     print("\n[3/3] Extracting edge features...")
-    run_feature_extraction()
+    run_edge_visuals()
 
     print("\n🎯 Milestone 1 completed successfully!")
     print(f"Artifacts saved under:\n - {TILES_2_DIR}\n - {TILES_4_DIR}\n - {TILES_8_DIR}")
