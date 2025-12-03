@@ -8,7 +8,9 @@ from config import (
     TILES_2_DIR, TILES_4_DIR, TILES_8_DIR,
     PREPROC_P2_DIR, PREPROC_P4_DIR, PREPROC_P8_DIR,
     TILES_ENH_2_DIR, TILES_ENH_4_DIR, TILES_ENH_8_DIR,
-    VISUALS_TILES_BA_DIR, ensure_dirs
+    TILES_CNT_2_DIR, TILES_CNT_4_DIR, TILES_CNT_8_DIR,
+    VISUALS_TILES_BA_DIR, VISUALS_TILES_CNT_DIR,
+    ensure_dirs
 )
 
 # ===================================
@@ -38,6 +40,14 @@ def preprocess(img):
     img = sharpen(img)
     return img
 
+# ===================================
+# Contour Extraction
+# ===================================
+
+def extract_contours(tile):
+    gray = cv2.cvtColor(tile, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 120, 240)
+    return edges
 
 # ===================================
 # Segmentation
@@ -56,36 +66,34 @@ def segment_and_save(puzzle_path, tiles_dir, N):
             tile = img[r*th:(r+1)*th, c*tw:(c+1)*tw]
             out = os.path.join(tiles_dir, f"{base}_r{r}_c{c}.png")
             cv2.imwrite(out, tile)
-            yield out, tile  # return original tile + metadata
+            yield out, tile
 
-
-def save_before_after(orig_tile, enh_tile, out_path):
-    both = np.hstack((orig_tile, enh_tile))
+def save_side_by_side(a, b, out_path):
+    both = np.hstack((a, b))
     cv2.imwrite(out_path, both)
 
-
 # ===================================
-# Full Preprocessing Pipeline
+# Full Pipeline
 # ===================================
 
 def run_preprocessing():
     ensure_dirs()
     folders = [
-        (PUZZLES_2_DIR, PREPROC_P2_DIR, TILES_2_DIR, TILES_ENH_2_DIR, 2),
-        (PUZZLES_4_DIR, PREPROC_P4_DIR, TILES_4_DIR, TILES_ENH_4_DIR, 4),
-        (PUZZLES_8_DIR, PREPROC_P8_DIR, TILES_8_DIR, TILES_ENH_8_DIR, 8)
+        (PUZZLES_2_DIR, PREPROC_P2_DIR, TILES_2_DIR, TILES_ENH_2_DIR, TILES_CNT_2_DIR, 2),
+        (PUZZLES_4_DIR, PREPROC_P4_DIR, TILES_4_DIR, TILES_ENH_4_DIR, TILES_CNT_4_DIR, 4),
+        (PUZZLES_8_DIR, PREPROC_P8_DIR, TILES_8_DIR, TILES_ENH_8_DIR, TILES_CNT_8_DIR, 8)
     ]
 
-    for input_dir, preproc_dir, tiles_orig, tiles_enh, N in folders:
+    for input_dir, preproc_dir, tiles_orig, tiles_enh, tiles_cnt, N in folders:
         imgs = sorted(glob(os.path.join(input_dir, "*.jpg")) +
                       glob(os.path.join(input_dir, "*.png")))
         if not imgs: continue
 
         print(f"\n[PHASE1] Processing {N}x{N} puzzles ({len(imgs)} images)")
-
         os.makedirs(preproc_dir, exist_ok=True)
         os.makedirs(tiles_orig, exist_ok=True)
         os.makedirs(tiles_enh, exist_ok=True)
+        os.makedirs(tiles_cnt, exist_ok=True)
 
         for img_path in tqdm(imgs):
             img = cv2.imread(img_path)
@@ -95,22 +103,24 @@ def run_preprocessing():
             img_enh = preprocess(img)
             cv2.imwrite(os.path.join(preproc_dir, os.path.basename(img_path)), img_enh)
 
-            # segment original + enhanced tiles
-            for (tile_path, orig_tile) in segment_and_save(img_path, tiles_orig, N):
-                fname = os.path.basename(tile_path)
+            # segment + save all versions
+            for (orig_path, orig_tile) in segment_and_save(img_path, tiles_orig, N):
+                fname = os.path.basename(orig_path)
                 r = int(fname.split("_r")[1].split("_")[0])
                 c = int(fname.split("_c")[1].split(".")[0])
                 h,w = orig_tile.shape[:2]
 
                 enh_tile = img_enh[r*h:(r+1)*h, c*w:(c+1)*w]
-                enh_tile_path = os.path.join(tiles_enh, fname)
-                cv2.imwrite(enh_tile_path, enh_tile)
+                cv2.imwrite(os.path.join(tiles_enh, fname), enh_tile)
 
-                # save before-after pair for report
-                ba_out = os.path.join(VISUALS_TILES_BA_DIR,
-                                      f"{N}x{N}_{fname}_BA.png")
-                save_before_after(orig_tile, enh_tile, ba_out)
+                cnt_tile = extract_contours(enh_tile)
+                cv2.imwrite(os.path.join(tiles_cnt, fname), cnt_tile)
 
+                # save visuals for report
+                save_side_by_side(orig_tile, enh_tile,
+                                  os.path.join(VISUALS_TILES_BA_DIR, f"{N}x{N}_{fname}_BA.png"))
+                save_side_by_side(orig_tile, cv2.cvtColor(cnt_tile, cv2.COLOR_GRAY2BGR),
+                                  os.path.join(VISUALS_TILES_CNT_DIR, f"{N}x{N}_{fname}_CNT.png"))
 
 if __name__ == "__main__":
     run_preprocessing()

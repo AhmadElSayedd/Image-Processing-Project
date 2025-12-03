@@ -43,14 +43,32 @@ TILES_ENH_8_DIR = os.path.join(TILES_ENH_DIR, "8x8")
 VISUALS_TILES_BA_DIR = os.path.join(VISUALS_DIR, "tiles_before_after")
 VISUALS_TILES_EDGES_DIR = os.path.join(VISUALS_DIR, "tiles_edges")
 
+# 📌 NEW: Contour Tile Output Folders
+TILES_CNT_DIR = os.path.join(ARTIFACTS_DIR, "tiles_contours")
+TILES_CNT_2_DIR = os.path.join(TILES_CNT_DIR, "2x2")
+TILES_CNT_4_DIR = os.path.join(TILES_CNT_DIR, "4x4")
+TILES_CNT_8_DIR = os.path.join(TILES_CNT_DIR, "8x8")
+
+# 📌 NEW: Visual Reports for Contour Tiles
+VISUALS_TILES_CNT_DIR = os.path.join(VISUALS_DIR, "tiles_contours")
+
 
 def ensure_dirs():
-    paths = [
-        ARTIFACTS_DIR,
-        PREPROC_P2_DIR, PREPROC_P4_DIR, PREPROC_P8_DIR,
+    dirs = [
+        ARTIFACTS_DIR, VISUALS_DIR,
+
+        # original tiles
         TILES_2_DIR, TILES_4_DIR, TILES_8_DIR,
+
+        # enhanced tiles
         TILES_ENH_DIR, TILES_ENH_2_DIR, TILES_ENH_4_DIR, TILES_ENH_8_DIR,
-        VISUALS_TILES_BA_DIR, VISUALS_TILES_EDGES_DIR,
+
+        # 📌 NEW contour folders
+        TILES_CNT_DIR, TILES_CNT_2_DIR, TILES_CNT_4_DIR, TILES_CNT_8_DIR,
+
+        # 📌 visual folders
+        VISUALS_TILES_BA_DIR, VISUALS_TILES_EDGES_DIR, VISUALS_TILES_CNT_DIR
     ]
-    for p in paths:
-        os.makedirs(p, exist_ok=True)
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
+

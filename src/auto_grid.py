@@ -153,21 +153,6 @@ def run_auto_grid_eval_and_save():
         print(f"→ Logs saved in: {os.path.relpath(TILES_AUTO_DIR)}")
 
     print("\n[FINISHED] Accuracy evaluation + overlays saved successfully.\n")
-    # --- Save one contour extraction visual for report (only once per N=8) ---
-    if expected_n == 8 and len(correct_list) > 0:
-        sample_img = cv2.imread(os.path.join(preproc_dir, correct_list[0]))
-        if sample_img is not None:
-            # Canny contour extraction
-            gray = cv2.cvtColor(sample_img, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Canny(gray, 120, 240)
-
-            # Save in visuals folder
-            from config import VISUALS_DIR
-            os.makedirs(VISUALS_DIR, exist_ok=True)
-            out_contour_path = os.path.join(VISUALS_DIR, "8x8_sample_contours.png")
-            cv2.imwrite(out_contour_path, edges)
-            print(f"Saved contour extraction visual → {out_contour_path}")
-
 
 
 if __name__ == "__main__":
